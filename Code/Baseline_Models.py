@@ -95,13 +95,38 @@ def Majority_Classifier(dfAtBats):
     plt.close()
 
     
-"""
-    Tries dummy classifiers for all possible strategies
+
+
+def Dummy_Classifier(dfAtBats,strat):
+    Years=np.arange(2012,2018)
+    performance = np.ones(len(Years)) 
+    for i in range(len(Years)):
+        year = Years[i]
+        curr_seas = dfAtBats.loc[dfAtBats['year']==year]
+        X_train,X_test,y_train,y_test = train_test_split(curr_seas)
+        clf = DummyClassifier(strategy='most_frequent',random_state=0)
+        clf.fit(X_train,y_train)
+        score=clf.score(X_train,y_train)
+        plt.plot([year],[score],marker='o')
+        performance[i]=score
+    display_results(Years,performance,name=str(strat)+"_Classifier_Results")
+    ax = plt.subplot(111)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    plt.title("Percent Correct by "+str(strat)+ " Classifier By Year")
+    plt.xlabel("Year")
+    plt.ylabel("Percent Correct")
+    plt.savefig(FIG_PATH+str(strat)+"_Classifier.pdf")
+    plt.close()
 
 """
-def All_Dummy_Classifiers(AtBatSource):
+    Tries dummy classifiers for all possible strategies, wrapper function
+
+"""
+def All_Dummy_Classifiers(dfAtBats):
     strategies=["stratified","most_frequent","prior","uniform","constant"]
-    pass
+    for strat in strategies:
+        Dummy_Classifier(dfAtBats,strat)
 
 
 
@@ -129,20 +154,21 @@ def main():
     
     
     Majority_Classifier(dfRegSeason)
-
-
     All_Dummy_Classifiers(dfRegSeason)
-    ### --- Logistic Regression --- ###
+   
+   
+   ### --- Logistic Regression --- ###
     
     ##TODO: write this code
-
-
-    ### --- Perceptron --- ### 
-    #TODO: decide if we want to use this as a baseline or as a first model in the actual project
     
 
     ### --- Basic Support Vector Classifier --- ###
     #TODO: decide if we want to use this as a baseline or as a first model in the actual project
+
+
+    ### --- Perceptron --- ### 
+    #TODO: decide if we want to use this as a baseline or as a first model in the actual project
+
 
 if __name__=="__main__":
     main()

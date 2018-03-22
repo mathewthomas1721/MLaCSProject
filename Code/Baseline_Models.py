@@ -43,12 +43,25 @@ def train_test_split(seas_df,t=.75,mode="dummy"):
         return trn_x,tst_x,trn_y,tst_y
     else:
          ##TODO: alter to return useful info for logistic regression, SVC
+        num_train = int(np.round(t*seas_df.shape[0]))
+        num_test = int(seas_df.shape[0]-num_train)
+        train = seas_df.head(num_train)
+        test = seas_df.tail(num_test)
+        
+        pitchers = seas_df.pitcher.unique()
+        print(pitchers)
+        for pitcher in pitchers:
+            temp = train.loc[train['pitcher']==pitcher]
+            print(temp.head())
+        batters = seas_df.batter.unique()
+        print(batters)
         return 0
 
 """
 returns a data frame with season 
 """
 def season_subset(year):
+
     pass
 
 
@@ -68,7 +81,7 @@ def display_results(Years,performance,name):
         
 
 """
-Runs majority classifier
+ Runs majority classifier
 
 """
 
@@ -153,15 +166,15 @@ def main():
     ### ---- Majority Classifier --- ###
     
     
-    Majority_Classifier(dfRegSeason)
-    All_Dummy_Classifiers(dfRegSeason)
+    #Majority_Classifier(dfRegSeason)
+    #All_Dummy_Classifiers(dfRegSeason)
    
    
-   ### --- Logistic Regression --- ###
+    ### --- Logistic Regression --- ###
     
     ##TODO: write this code
     
-
+    train_test_split(dfRegSeason,mode="features")
     ### --- Basic Support Vector Classifier --- ###
     #TODO: decide if we want to use this as a baseline or as a first model in the actual project
 

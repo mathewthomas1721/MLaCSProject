@@ -86,7 +86,7 @@ def RFRegressor(fname):
     '''
 
     # Instantiate model with 1000 decision trees
-    rf = RandomForestRegressor(n_estimators = 30, random_state = 42)
+    rf = RandomForestRegressor(n_estimators = 40, random_state = 42)
 
     # Train the model on training data
     rf.fit(train_features, train_labels);

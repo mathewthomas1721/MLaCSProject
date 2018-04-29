@@ -12,7 +12,7 @@ DATA_PATH = "../Data/"
 WRITE_PATH= "../Data/OutData/"
 FIG_PATH = "../Figs/"
 #POST_SEASON_ALL = DATA_PATH + "AtBats_PostSeason_2012-2017_sorted.csv"
-REG_SEASON_ALL = DATA_PATH + "MLB_AtBats_RegularSeason_2012_sorted.csv"
+REG_SEASON_ALL = DATA_PATH + "MLB_AtBats_RegularSeason_2017_sorted.csv"
 #SPRING_TRN_ALL = DATA_PATH + "AtBats_SpringTraining_2012-2017_sorted.csv"
 PLAYERS_ALL = DATA_PATH + "MLB_Players_new.csv"
 PITCHERS_ALL = DATA_PATH + "MLB_Pitchers_new.csv"
@@ -99,7 +99,8 @@ def main():
 	pd.options.display.max_columns = 999
 	#print(dfboth.head(1))
 	dfboth.pitches = dfboth.pitches.fillna("NA")
-	dfboth.bats = dfboth.bats.fillna(dfboth.pitches, inplace=True)
+	dfboth.throws = dfboth.throws.fillna("NA")
+	dfboth.bats.fillna(dfboth.throws, inplace=True)
 	dfboth['matchup'] = dfboth['bats'] + dfboth['pitches']
 	#print(dfboth.head(1))
 	oneHotHand = pd.get_dummies(dfboth['matchup'])
@@ -114,7 +115,7 @@ def main():
 	print(dfRegSeasonfeat)
 	dfRegSeasonfeat  = dfRegSeasonfeat.drop(dfRegSeasonfeat.columns[dfRegSeasonfeat.columns.str.contains('unnamed',case = False)],axis = 1)
 	#dfRegSeasonfeat = dfRegSeasonfeat.head(1025296)
-	dfRegSeasonfeat.to_csv(DATA_PATH + "RegularSeasonFeatures2012.csv")
+	dfRegSeasonfeat.to_csv(DATA_PATH + "RegularSeasonFeatures2017.csv")
 
 	
 

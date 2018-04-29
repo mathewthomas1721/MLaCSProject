@@ -37,11 +37,11 @@ def train_test_split_season(df,ts=0.2,validation=False,val_ts=0.1):
 
 	if not validation:
 		X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=ts,shuffle=False)
-		return (X_train, X_test, y_train, y_test)
+		return X_train, X_test, y_train, y_test
 	else:
 		X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=ts,shuffle=False)
 		X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=val_ts, shuffle=False)
-		return(X_train, X_val, X_test,y_train, y_val, y_test)
+		return X_train, X_val, X_test,y_train, y_val, y_test
 
 def main():
 

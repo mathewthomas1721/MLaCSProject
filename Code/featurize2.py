@@ -14,8 +14,8 @@ FIG_PATH = "../Figs/"
 #POST_SEASON_ALL = DATA_PATH + "AtBats_PostSeason_2012-2017_sorted.csv"
 REG_SEASON_ALL = DATA_PATH + "MLB_AtBats_RegularSeason_2017_sorted.csv"
 #SPRING_TRN_ALL = DATA_PATH + "AtBats_SpringTraining_2012-2017_sorted.csv"
-PLAYERS_ALL = DATA_PATH + "MLB_Players.csv"
-PITCHERS_ALL = DATA_PATH + "MLB_Pitchers.csv"
+PLAYERS_ALL = DATA_PATH + "MLB_Players_new.csv"
+PITCHERS_ALL = DATA_PATH + "MLB_Pitchers_new.csv"
 
 
 def getLeagueAvg(df):
@@ -94,19 +94,20 @@ def main():
 	dfPitchers.pitches = dfPitchers.pitches.fillna("NA")
 	#print(dfPitchers.head(1))
 
-	#dfbatters = pd.merge(dfRegSeason, dfPlayers, how = 'left', left_on = 'batter', right_on = 'bref_id')
-	#dfboth = pd.merge(dfbatters, dfPitchers, how = 'left', left_on = 'pitcher', right_on = 'bref_id')
+	dfbatters = pd.merge(dfRegSeason, dfPlayers, how = 'left', left_on = 'batter', right_on = 'player')
+	dfboth = pd.merge(dfbatters, dfPitchers, how = 'left', left_on = 'pitcher', right_on = 'player')
 	pd.options.display.max_columns = 999
 	#print(dfboth.head(1))
-	#dfboth.bats = dfboth.bats.fillna("NA")
-	#dfboth.pitches = dfboth.pitches.fillna("NA")
-	#dfboth['matchup'] = dfboth['bats'] + dfboth['pitches']
+	dfboth.pitches = dfboth.pitches.fillna("NA")
+	dfboth.throws = dfboth.throws.fillna("NA")
+	dfboth.bats.fillna(dfboth.throws, inplace=True)
+	dfboth['matchup'] = dfboth['bats'] + dfboth['pitches']
 	#print(dfboth.head(1))
-	#oneHotHand = pd.get_dummies(dfboth['matchup'])
+	oneHotHand = pd.get_dummies(dfboth['matchup'])
 	#print(oneHotHand.head(1))
 
 
-	dfRegSeasonfeat = pd.concat([dfRegSeason, oneHotstad, oneHotbase, oneHotside, oneHotinning, oneHotouts], axis=1)
+	dfRegSeasonfeat = pd.concat([dfRegSeason, oneHotstad, oneHotbase, oneHotside, oneHotinning, oneHotouts, oneHotHand], axis=1)
 	#print(dfRegSeasonfeat.info)
 	
 	dfRegSeasonfeat['score'] = ((-1) ** dfRegSeasonfeat['top']) * (dfRegSeasonfeat['home_score'] - dfRegSeasonfeat['away_score'])

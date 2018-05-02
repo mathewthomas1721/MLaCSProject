@@ -7,12 +7,14 @@ from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression as LogisticModel
 
 
-N = 50.0
+year = sys.argv[1]
+
+N = float(sys.argv[2])
 DATA_PATH = "../Data/"
 WRITE_PATH= "../Data/OutData/"
 FIG_PATH = "../Figs/"
 #POST_SEASON_ALL = DATA_PATH + "AtBats_PostSeason_2012-2017_sorted.csv"
-REG_SEASON_ALL = DATA_PATH + "MLB_AtBats_RegularSeason_2017_sorted.csv"
+REG_SEASON_ALL = DATA_PATH + "MLB_AtBats_RegularSeason_" + year + "_sorted.csv"
 #SPRING_TRN_ALL = DATA_PATH + "AtBats_SpringTraining_2012-2017_sorted.csv"
 PLAYERS_ALL = DATA_PATH + "MLB_Players_new.csv"
 PITCHERS_ALL = DATA_PATH + "MLB_Pitchers_new.csv"
@@ -30,13 +32,18 @@ def getRatesPitcher(df, league_avg):
 	#print(dfslim.info())
 	pitcherdfs = []
 	for i, p in enumerate(pitchers):
+		print(i)
 		dfpitcher = dfslim[dfslim.pitcher == p]
 		dfpitcher = dfpitcher.reset_index()
 		#dfpitcher = dfpitcher.drop('index', axis=1)
 		dfpitcher['cumpitcherk'] = dfpitcher['y'].expanding(2).sum()
 		dfpitcher.cumpitcherk = dfpitcher.cumpitcherk.fillna(0)
-		dfpitcher['pitcherkrate'] = (dfpitcher['cumpitcherk'] + league_avg ) / (dfpitcher.index + N)
+		dfpitcher['pitcherkrate'] = (dfpitcher['cumpitcherk'] - dfpitcher['y'] + league_avg ) / (dfpitcher.index + N)
 		pitcherdfs.append(dfpitcher)
+		for wind, window_size in enumerate([151, 71, 26]):
+			dfpitcher['wind' + str(wind) + 'pkrate'] = (dfpitcher.y.rolling(window_size).sum() - dfpitcher['y']) / (window_size - 1)
+			dfpitcher['wind' + str(wind) + 'pkrate'] = dfpitcher['wind' + str(wind) + 'pkrate'].fillna(dfpitcher.pitcherkrate)
+			
 	allpitchers = pd.concat(pitcherdfs, axis=0)
 	allpitchers = allpitchers.drop(['y', 'pitcher', 'batter'],axis=1)
 	return allpitchers
@@ -49,13 +56,17 @@ def getRatesBatter(df, league_avg):
 	#print(dfslim.info())
 	batterdfs = []
 	for i, b in enumerate(batters):
+		print(i)
 		dfbatter = dfslim[dfslim.batter == b]
 		dfbatter = dfbatter.reset_index()
 		#dfbatter = dfbatter.drop('index', axis=1)
 		dfbatter['cumbatterk'] = dfbatter['y'].expanding(2).sum()
 		dfbatter.cumbatterk = dfbatter.cumbatterk.fillna(0)
-		dfbatter['batterkrate'] = (dfbatter['cumbatterk'] + league_avg) / (dfbatter.index + N)
+		dfbatter['batterkrate'] = (dfbatter['cumbatterk'] - dfbatter['y'] + league_avg) / (dfbatter.index + N)
 		batterdfs.append(dfbatter)
+		for wind, window_size in enumerate([151, 61, 26]):
+			dfbatter['wind' + str(wind) + 'bkrate'] = (dfbatter.y.rolling(window_size).sum() - dfbatter['y']) / (window_size - 1)
+			dfbatter['wind' + str(wind) + 'bkrate'] = dfbatter['wind' + str(wind) + 'bkrate'].fillna(dfbatter.batterkrate)
 	allbatters = pd.concat(batterdfs, axis=0)
 	allbatters = allbatters.drop(['y', 'pitcher', 'batter'],axis=1)
 	return allbatters
@@ -115,7 +126,7 @@ def main():
 	print(dfRegSeasonfeat)
 	dfRegSeasonfeat  = dfRegSeasonfeat.drop(dfRegSeasonfeat.columns[dfRegSeasonfeat.columns.str.contains('unnamed',case = False)],axis = 1)
 	#dfRegSeasonfeat = dfRegSeasonfeat.head(1025296)
-	dfRegSeasonfeat.to_csv(DATA_PATH + "RegularSeasonFeatures2017.csv")
+	dfRegSeasonfeat.to_csv(DATA_PATH + "RegularSeasonFeatures" + year + ".csv")
 
 	
 

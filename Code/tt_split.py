@@ -1,28 +1,28 @@
-import pandas as pd 
-import numpy as np 
+import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 
 
 
 def train_test_split_season(df,ts=0.2,validation=False,val_ts=0.1):
 	"""
-	Performs train/test split on a single seasons of data.
+	Performs train/test split on a single season of data.
 
-	Inputs: 
-			df - the data frame with a featurized season. 
+	Inputs:
+			df - the data frame with a featurized season.
 				Must have a column 'y' with the strikeout results.
 				assumes 'y' is the first column of the data frame (i.e col 0)
 				and that the rest of the features are in columns 1:
-			
-			ts  - the fraction of the data frame that should be in the test set 
-			
+
+			ts  - the fraction of the data frame that should be in the test set
+
 			validation - whether or not a validation set should be returned
 
 			val_ts - the fraction of the training data that should be set aside
 					in the validation set
 
 	Outputs:
-		A tuple with results. 
+		A tuple with results.
 
 		If validation is false:
 			(X_train, X_test, y_train, y_test)
@@ -45,7 +45,7 @@ def train_test_split_season(df,ts=0.2,validation=False,val_ts=0.1):
 
 def main():
 
-	""" unit tests""" 
+	""" unit tests"""
 	test_file = "../Data/RegularSeasonFeatures2012.csv"
 	df = pd.read_csv(test_file,index_col=0)
 	print(df.head())

@@ -1,3 +1,4 @@
+from tt_split import train_test_split_season
 # Pandas is used for data manipulation
 import pandas as pd
 
@@ -34,59 +35,77 @@ def compute_log_loss(y_true, pred_probs,eps=10**-4):
 
 def RFRegressor(fname):
     # Read in data and display first 5 rows
-    features = pd.read_csv(fname)
-    features= features.drop('id',axis = 1)
+    features = pd.read_csv(fname,index_col = 0)
+    #features= features.drop('id',axis = 1)
     #print(features.shape[0])
     #print(features.isnull().any())
-    features = features.dropna(how='any')
+    #features = features.dropna(how='any')
     #print(features.shape[0])
 
-    features.head(5)
+    #features.head(5)
 
-    print('The shape of our features is:', features.shape)
+    #print('The shape of our features is:', features.shape)
 
     # Descriptive statistics for each column
-    features.describe()
+    #features.describe()
 
     # One-hot encode the data using pandas get_dummies
-    features = pd.get_dummies(features)
+    #features = pd.get_dummies(features)
 
     # Display the first 5 rows of the last 12 columns
-    features.iloc[:,5:].head(5)
+    #features.iloc[:,5:].head(5)
 
     # Labels are the values we want to predict
-    labels = np.array(features['y'])
+    #labels = np.array(features['y'])
 
     # Remove the labels from the features
     # axis 1 refers to the columns
-    features= features.drop('y', axis = 1)
+    #features= features.drop('y', axis = 1)
 
     # Saving feature names for later use
     feature_list = list(features.columns)
 
     # Convert to numpy array
-    features = np.array(features)
+    #features = np.array(features)
 
     # Split the data into training and testing sets
-    train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size = 0.25, random_state = 42)
+    #train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size = 0.25, shuffle = False)
+    '''
+    train_features, val_features, test_features, train_labels, val_labels, test_labels = train_test_split_season(features,validation = True)
+
+    print('Training Features Shape:', train_features.shape)
+    print('Training Labels Shape:', train_labels.shape)
+    print('Val Features Shape:', val_features.shape)
+    print('Val Labels Shape:', val_labels.shape)
+    '''
+    
+    max_features = 21
+    max_depth = 7
+    min_samples_split =  2
+    min_samples_leaf = 1
+    max_leaf_nodes = 206
+    '''
+    for i in range(1,1000):
+        max_leaf_nodes = i+1
+        # Instantiate model with 1000 decision trees
+        rf = RandomForestRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
+        # Train the model on training data
+        rf.fit(train_features, train_labels);
+
+        # Use the forest's predict method on the test data
+        predictions = rf.predict(test_features)
+        print(compute_log_loss(test_labels,predictions), max_leaf_nodes)
+    '''
+
+    train_features, test_features, train_labels, test_labels = train_test_split_season(features,validation = False)
 
     print('Training Features Shape:', train_features.shape)
     print('Training Labels Shape:', train_labels.shape)
     print('Testing Features Shape:', test_features.shape)
     print('Testing Labels Shape:', test_labels.shape)
 
-    '''
-    # The baseline predictions are the historical averages
-    baseline_preds = test_features[:, feature_list.index('average')]
-
-    # Baseline errors, and display average baseline error
-    baseline_errors = abs(baseline_preds - test_labels)
-
-    print('Average baseline error: ', round(np.mean(baseline_errors), 2))
-    '''
-
     # Instantiate model with 1000 decision trees
-    rf = RandomForestRegressor(n_estimators = 40, random_state = 42)
+    rf = RandomForestRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
 
     # Train the model on training data
     rf.fit(train_features, train_labels);
@@ -94,31 +113,7 @@ def RFRegressor(fname):
     # Use the forest's predict method on the test data
     predictions = rf.predict(test_features)
     print(compute_log_loss(test_labels,predictions))
-    '''
-    predictions[predictions == 0] = 10.0**-4
-    logP = np.log(predictions)
-    log1P = np.log(1-predictions)
-    y = np.transpose(test_labels)
-    oneMinusy = np.transpose(1 - test_labels)
 
-    res = np.dot(y,logP) + np.dot(oneMinusy,log1P)
-    print('Accuracy:', np.mean(res))
-    '''
-    # Calculate the absolute errors
-    #errors = abs(predictions - test_labels)
-
-    # Print out the mean absolute error (mae)
-    #print('Mean Absolute Error:', round(np.mean(errors), 2), 'degrees.')
-
-    # Calculate mean absolute percentage error (MAPE)
-    #print(errors)
-    #print(test_labels)
-
-    #mape = 100 * (errors / test_labels)
-
-    # Calculate and display accuracy
-    #accuracy = 100 - np.mean(mape)
-    #print('Accuracy:', round(accuracy, 2), '%.')
 
     '''
     # Pull out one tree from the forest
@@ -255,4 +250,4 @@ def RFRegressor(fname):
     plt.xlabel('Date'); plt.ylabel('Maximum Temperature (F)'); plt.title('Actual Max Temp and Variables');
     '''
 
-RFRegressor('../Data/RegularSeasonFeatures2012-2017.csv')
+RFRegressor('../Data/RegularSeasonFeatures2012.csv')

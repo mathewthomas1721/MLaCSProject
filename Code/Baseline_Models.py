@@ -25,18 +25,18 @@ SPRING_TRN_ALL = DATA_PATH + "AtBats_SpringTraining_2012-2017_update.csv"
 
 
 def train_test_split(seas_df,t=.75,mode="dummy"):
-   
+
     if mode=="dummy":
         num_train = int(np.round(t*seas_df.shape[0]))
         num_test = int(seas_df.shape[0]-num_train)
-    
+
         train = seas_df.head(num_train)
         test = seas_df.tail(num_test)
 
-    
+
         trn_x = np.array(train['inning']).reshape((num_train,1))
         trn_y = np.array(train['y'])
-    
+
         tst_x = np.array(test['inning']).reshape((num_test,1))
         tst_y = np.array(test['y'])
         ## need to reshape so sklearn will work with it, otherwise throws a value error later
@@ -47,7 +47,7 @@ def train_test_split(seas_df,t=.75,mode="dummy"):
         num_test = int(seas_df.shape[0]-num_train)
         train = seas_df.head(num_train)
         test = seas_df.tail(num_test)
-        
+
         pitchers = seas_df.pitcher.unique()
         print(pitchers)
         for pitcher in pitchers:
@@ -58,7 +58,7 @@ def train_test_split(seas_df,t=.75,mode="dummy"):
         return 0
 
 """
-returns a data frame with season 
+returns a data frame with season
 """
 def season_subset(year):
 
@@ -78,7 +78,7 @@ def display_results(Years,performance,name):
     of.write("\n")
     of.write("Score is percentage correct")
     of.close()
-        
+
 
 """
  Runs majority classifier
@@ -87,7 +87,7 @@ def display_results(Years,performance,name):
 
 def Majority_Classifier(dfAtBats):
     Years=np.arange(2012,2018)
-    performance = np.ones(len(Years)) 
+    performance = np.ones(len(Years))
     for i in range(len(Years)):
         year = Years[i]
         curr_seas = dfAtBats.loc[dfAtBats['year']==year]
@@ -107,12 +107,12 @@ def Majority_Classifier(dfAtBats):
     plt.savefig(FIG_PATH+"Majority_Classifier.pdf")
     plt.close()
 
-    
+
 
 
 def Dummy_Classifier(dfAtBats,strat):
     Years=np.arange(2012,2018)
-    performance = np.ones(len(Years)) 
+    performance = np.ones(len(Years))
     for i in range(len(Years)):
         year = Years[i]
         curr_seas = dfAtBats.loc[dfAtBats['year']==year]
@@ -148,38 +148,38 @@ def main():
     ### ---- Prepreocess Season Data --- ###
         # gives a column indexing season by year
         # binarizes the outcome of strikeouts to be 1 (yes strikeout) and 0 (not strikeout)
-        #TODO: establish unique within-season game ID numbers so we can analyze 'first k games' etc. 
+        #TODO: establish unique within-season game ID numbers so we can analyze 'first k games' etc.
              # will also make adding in pitchfx data easier
-    
-    
-    dfRegSeason = pd.read_csv(REG_SEASON_ALL)
+
+
+    dfRegSeason = pd.read_csv("../Data/RegularSeasonFeatures2012.csv")
     dfRegSeason['y'] = np.where(dfRegSeason['descr']=='Strikeout', 1, 0)
-    dfRegSeason['year'] = pd.DatetimeIndex(dfRegSeason['date']).year 
-    
+    dfRegSeason['year'] = pd.DatetimeIndex(dfRegSeason['date']).year
+
     ## commented out for runtime, should be pre-processed
 
     #dfPostSeason = pd.read_csv(POST_SEASON_ALL)
     #dfSpringTrn = pd.read_csv(SPRING_TRN_ALL)
-    
+
 
 
     ### ---- Majority Classifier --- ###
-    
-    
-    #Majority_Classifier(dfRegSeason)
-    #All_Dummy_Classifiers(dfRegSeason)
-   
-   
+
+
+    Majority_Classifier(dfRegSeason)
+    All_Dummy_Classifiers(dfRegSeason)
+
+
     ### --- Logistic Regression --- ###
-    
+
     ##TODO: write this code
-    
+
     train_test_split(dfRegSeason,mode="features")
     ### --- Basic Support Vector Classifier --- ###
     #TODO: decide if we want to use this as a baseline or as a first model in the actual project
 
 
-    ### --- Perceptron --- ### 
+    ### --- Perceptron --- ###
     #TODO: decide if we want to use this as a baseline or as a first model in the actual project
 
 

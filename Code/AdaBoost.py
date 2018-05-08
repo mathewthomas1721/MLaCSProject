@@ -38,10 +38,10 @@ def ABoostRegressor(fname):
     df = pd.DataFrame(grid.cv_results_)
     df['mean_test_score'] = -df['mean_test_score']
     df['mean_train_score'] = -df['mean_train_score']
-    cols_to_keep = ['n_estimators','learning_rate', 'loss']
+    cols_to_keep = ["param_n_estimators","param_learning_rate","mean_test_score"]
     df_toshow = df[cols_to_keep].fillna('-')
     df_toshow = df_toshow.sort_values(by=["mean_test_score"])
-    print(df_toshow[0])
+    print(df_toshow)
 
 
     '''

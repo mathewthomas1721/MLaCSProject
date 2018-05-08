@@ -21,17 +21,9 @@ def ABoostRegressor(fname):
     y_train_val = np.concatenate((train_labels, val_labels))
     val_fold = [-1]*len(train_features) + [0]*len(val_features) #0 corresponds to validation
 
-    # Now we set up and do the grid search over l2reg. The np.concatenate
-    # command illustrates my search for the best hyperparameter. In each line,
-    # I'm zooming in to a particular hyperparameter range that showed promise
-    # in the previous grid. This approach works reasonably well when
-    # performance is convex as a function of the hyperparameter, which it seems
-    # to be here.
-    param_grid = [{'n_estimators' : 10**np.arange(0,3), 'learning_rate':10.0**np.arange(-2,1,1), 'loss':['linear', 'square', 'exponential']}]
-    #'max_depth' : np.arange(1,100,20)}],
-    #'min_samples_split' :  np.arange(2,10,2),
-    #'min_samples_leaf' : np.arange(2,10,2),
-    #'max_leaf_nodes' : np.arange(2,100,20)}]
+
+    param_grid = [{'n_estimators' : 10**np.arange(0,3), 'learning_rate':10.0**np.arange(-2,1,1)}]
+
 
     ridge_regression_estimator = AdaBoostRegressor()
     grid = GridSearchCV(ridge_regression_estimator,
@@ -44,8 +36,6 @@ def ABoostRegressor(fname):
     grid.fit(X_train_val, y_train_val)
 
     df = pd.DataFrame(grid.cv_results_)
-    # Flip sign of score back, because GridSearchCV likes to maximize,
-    # so it flips the sign of the score if "greater_is_better=FALSE"
     df['mean_test_score'] = -df['mean_test_score']
     df['mean_train_score'] = -df['mean_train_score']
     cols_to_keep = ['n_estimators','learning_rate', 'loss']

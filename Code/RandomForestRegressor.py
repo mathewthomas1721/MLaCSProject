@@ -1,102 +1,70 @@
+from sklearn.metrics import log_loss,make_scorer
 from tt_split import train_test_split_season
-# Pandas is used for data manipulation
 import pandas as pd
-
-# Use numpy to convert to arrays
 import numpy as np
-
-# Using Skicit-learn to split data into training and testing sets
 from sklearn.model_selection import train_test_split
-
-# Import the model we are using
 from sklearn.ensemble import RandomForestRegressor
-
-
-# Import tools needed for visualization
 from sklearn.tree import export_graphviz
+from sklearn.model_selection import GridSearchCV, PredefinedSplit
 import pydot
-
-# Import matplotlib for plotting and use magic command for Jupyter Notebooks
 import matplotlib.pyplot as plt
-
-# Use datetime for creating date objects for plotting
 import datetime
-
-# Import tools needed for visualization
-from sklearn.tree import export_graphviz
-import pydot
-
-def compute_log_loss(y_true, pred_probs,eps=10**-4):
-    pred_probs[np.where(pred_probs==0)]= eps
-    pred_probs[np.where(pred_probs==1)]= 1 - eps
-    res = (-1/y_true.shape[0])*np.sum(np.dot(y_true,np.log(pred_probs)) +
-    np.dot(1-y_true,np.log(1-pred_probs)))
-    return res
+pd.set_option('display.height', 1000)
+pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.width', 1000)
 
 def RFRegressor(fname):
-    # Read in data and display first 5 rows
+
+
     features = pd.read_csv(fname,index_col = 0)
-    #features= features.drop('id',axis = 1)
-    #print(features.shape[0])
-    #print(features.isnull().any())
-    #features = features.dropna(how='any')
-    #print(features.shape[0])
 
-    #features.head(5)
 
-    #print('The shape of our features is:', features.shape)
-
-    # Descriptive statistics for each column
-    #features.describe()
-
-    # One-hot encode the data using pandas get_dummies
-    #features = pd.get_dummies(features)
-
-    # Display the first 5 rows of the last 12 columns
-    #features.iloc[:,5:].head(5)
-
-    # Labels are the values we want to predict
-    #labels = np.array(features['y'])
-
-    # Remove the labels from the features
-    # axis 1 refers to the columns
-    #features= features.drop('y', axis = 1)
-
-    # Saving feature names for later use
+    features = features [['y', 'pitcherkrate', 'wind0pkrate', 'wind1pkrate', 'wind2pkrate', 'batterkrate', 'wind0bkrate', 'wind1bkrate', 'wind2bkrate']]
     feature_list = list(features.columns)
-    print(feature_list)
-    # Convert to numpy array
-    #features = np.array(features)
+    #print(feature_list)
 
-    # Split the data into training and testing sets
-    #train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size = 0.25, shuffle = False)
-    '''
     train_features, val_features, test_features, train_labels, val_labels, test_labels = train_test_split_season(features,validation = True)
 
-    print('Training Features Shape:', train_features.shape)
-    print('Training Labels Shape:', train_labels.shape)
-    print('Val Features Shape:', val_features.shape)
-    print('Val Labels Shape:', val_labels.shape)
-    '''
+    X_train_val = np.vstack((train_features, val_features))
+    y_train_val = np.concatenate((train_labels, val_labels))
+    val_fold = [-1]*len(train_features) + [0]*len(val_features) #0 corresponds to validation
 
-    max_features = 21
-    max_depth = 7
-    min_samples_split =  2
-    min_samples_leaf = 1
-    max_leaf_nodes = 206
-    '''
-    for i in range(1,1000):
-        max_leaf_nodes = i+1
-        # Instantiate model with 1000 decision trees
-        rf = RandomForestRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
-        # Train the model on training data
-        rf.fit(train_features, train_labels);
+    # Now we set up and do the grid search over l2reg. The np.concatenate
+    # command illustrates my search for the best hyperparameter. In each line,
+    # I'm zooming in to a particular hyperparameter range that showed promise
+    # in the previous grid. This approach works reasonably well when
+    # performance is convex as a function of the hyperparameter, which it seems
+    # to be here.
+    param_grid = [{'max_features' : np.array([5]),#np.arange(1,len(feature_list))
+    'max_depth' : np.array([6]),#np.arange(1,10,1)}]
+    'min_samples_split' :  np.array([34]),
+    'min_samples_leaf' : np.array([12]),
+    'max_leaf_nodes' : np.arange(2,1000,1)}]
 
-        # Use the forest's predict method on the test data
-        predictions = rf.predict(val_features)
-        print(compute_log_loss(val_labels,predictions), max_leaf_nodes)
-    '''
+    ridge_regression_estimator = RandomForestRegressor()
+    grid = GridSearchCV(ridge_regression_estimator,
+                        param_grid,
+                        return_train_score=True,
+                        cv = PredefinedSplit(test_fold=val_fold),
+                        refit = True,
+                        scoring = make_scorer(log_loss,
+                                              greater_is_better = False))
+    grid.fit(X_train_val, y_train_val)
 
+    df = pd.DataFrame(grid.cv_results_)
+    # Flip sign of score back, because GridSearchCV likes to maximize,
+    # so it flips the sign of the score if "greater_is_better=FALSE"
+    df['mean_test_score'] = -df['mean_test_score']
+    df['mean_train_score'] = -df['mean_train_score']
+    cols_to_keep = ["param_max_leaf_nodes","mean_test_score"]
+    #cols_to_keep = ["param_max_features", "param_max_depth","param_min_samples_split","param_min_samples_leaf", "param_max_leaf_nodes","mean_test_score","mean_train_score"]
+    df_toshow = df[cols_to_keep].fillna('-')
+    df_toshow = df_toshow.sort_values(by=["mean_test_score"])
+    print(df_toshow[0])
+
+
+    '''
     train_features, test_features, train_labels, test_labels = train_test_split_season(features,validation = False)
 
     print('Training Features Shape:', train_features.shape)
@@ -113,7 +81,7 @@ def RFRegressor(fname):
     # Use the forest's predict method on the test data
     predictions = rf.predict(test_features)
     print(compute_log_loss(test_labels,predictions))
-
+    '''
 
 
 RFRegressor('../Data/RegularSeasonFeatures2012.csv')

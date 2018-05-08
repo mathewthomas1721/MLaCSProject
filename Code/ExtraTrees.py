@@ -1,20 +1,13 @@
+from sklearn.metrics import log_loss,make_scorer
 from tt_split import train_test_split_season
-# Pandas is used for data manipulation
 import pandas as pd
-
-# Use numpy to convert to arrays
 import numpy as np
-
-# Using Skicit-learn to split data into training and testing sets
 from sklearn.model_selection import train_test_split
-
-# Import the model we are using
-from sklearn.ensemble import ExtraTreesClassifier
-
-# Import matplotlib for plotting and use magic command for Jupyter Notebooks
+from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.tree import export_graphviz
+from sklearn.model_selection import GridSearchCV, PredefinedSplit
+import pydot
 import matplotlib.pyplot as plt
-
-# Use datetime for creating date objects for plotting
 import datetime
 
 def compute_log_loss(y_true, pred_probs,eps=10**-4):
@@ -27,91 +20,197 @@ def compute_log_loss(y_true, pred_probs,eps=10**-4):
 def ETreesRegressor(fname):
     # Read in data and display first 5 rows
     features = pd.read_csv(fname,index_col = 0)
-    #features= features.drop('id',axis = 1)
-    #print(features.shape[0])
-    #print(features.isnull().any())
-    #features = features.dropna(how='any')
-    #print(features.shape[0])
 
-    #features.head(5)
-
-    #print('The shape of our features is:', features.shape)
-
-    # Descriptive statistics for each column
-    #features.describe()
-
-    # One-hot encode the data using pandas get_dummies
-    #features = pd.get_dummies(features)
-
-    # Display the first 5 rows of the last 12 columns
-    #features.iloc[:,5:].head(5)
-
-    # Labels are the values we want to predict
-    #labels = np.array(features['y'])
-
-    # Remove the labels from the features
-    # axis 1 refers to the columns
-    #features= features.drop('y', axis = 1)
-
-    # Saving feature names for later use
     feature_list = list(features.columns)
-    #print(feature_list)
-    # Convert to numpy array
-    #features = np.array(features)
-
-    # Split the data into training and testing sets
-    #train_features, test_features, train_labels, test_labels = train_test_split(features, labels, test_size = 0.25, shuffle = False)
 
     train_features, val_features, test_features, train_labels, val_labels, test_labels = train_test_split_season(features,validation = True)
 
+    X_train_val = np.vstack((train_features, val_features))
+    y_train_val = np.concatenate((train_labels, val_labels))
+    val_fold = [-1]*len(train_features) + [0]*len(val_features) #0 corresponds to validation
+
+    # Now we set up and do the grid search over l2reg. The np.concatenate
+    # command illustrates my search for the best hyperparameter. In each line,
+    # I'm zooming in to a particular hyperparameter range that showed promise
+    # in the previous grid. This approach works reasonably well when
+    # performance is convex as a function of the hyperparameter, which it seems
+    # to be here.
+    param_grid = [{'max_features' : np.arange(1,len(feature_list))}]
+    #'max_depth' : np.arange(1,100,20)}],
+    #'min_samples_split' :  np.arange(2,10,2),
+    #'min_samples_leaf' : np.arange(2,10,2),
+    #'max_leaf_nodes' : np.arange(2,100,20)}]
+
+    ridge_regression_estimator = ExtraTreesRegressor()
+    grid = GridSearchCV(ridge_regression_estimator,
+                        param_grid,
+                        return_train_score=True,
+                        cv = PredefinedSplit(test_fold=val_fold),
+                        refit = True,
+                        scoring = make_scorer(log_loss,
+                                              greater_is_better = False))
+    grid.fit(X_train_val, y_train_val)
+
+    df = pd.DataFrame(grid.cv_results_)
+    # Flip sign of score back, because GridSearchCV likes to maximize,
+    # so it flips the sign of the score if "greater_is_better=FALSE"
+    df['mean_test_score'] = -df['mean_test_score']
+    df['mean_train_score'] = -df['mean_train_score']
+    cols_to_keep = ["param_max_features","mean_test_score","mean_train_score"]
+    #cols_to_keep = ["param_max_features", "param_max_depth","param_min_samples_split","param_min_samples_leaf", "param_max_leaf_nodes","mean_test_score","mean_train_score"]
+    df_toshow = df[cols_to_keep].fillna('-')
+    df_toshow = df_toshow.sort_values(by=["param_l2reg"])
+    print(df_toshow)
+
+    '''
     print('Training Features Shape:', train_features.shape)
     print('Training Labels Shape:', train_labels.shape)
     print('Val Features Shape:', val_features.shape)
     print('Val Labels Shape:', val_labels.shape)
-
 
     max_features = None
     max_depth = None
     min_samples_split =  2
     min_samples_leaf = 1
     max_leaf_nodes = None
-
-    rf = ExtraTreesClassifier(n_estimators = 100, random_state = 42)#, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
-    # Train the model on training data
-    rf.fit(train_features, train_labels);
-
-    # Use the forest's predict method on the test data
-    predictions = rf.predict_proba(val_features)
-    print(compute_log_loss(val_labels,predictions), max_features)
-    '''
-    for i in range(0,1000):
-        max_features = i+1
+    minlog = 1
+    print("MAX FEATURES")
+    for i in range(1,len(feature_list)):
+        max_features = i
         # Instantiate model with 1000 decision trees
-        rf = ExtraTreesClassifier(n_estimators = 100, random_state = 42)#, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
+        rf = ExtraTreesRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
         # Train the model on training data
         rf.fit(train_features, train_labels);
 
-        # Use the forest's predict method on the test data
-        predictions = rf.predict_proba(val_features)
-        print(compute_log_loss(val_labels,predictions), max_features)
-        '''
+        predictions = rf.predict(val_features)
+        loss = log_loss(val_labels,predictions)
+        if loss<minlog:
+
+
+            minlog = loss
+            best_max_features = max_features
+            print(minlog, best_max_features)
+    '''
+
+    '''
+    max_features = 25
+    max_depth = None
+    min_samples_split =  2
+    min_samples_leaf = 1
+    max_leaf_nodes = None
+    minlog = 1
+    print("MAX DEPTH")
+    for i in range(10,20):
+        max_depth = i+1
+        print(max_depth)
+        # Instantiate model with 1000 decision trees
+        rf = ExtraTreesRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
+        # Train the model on training data
+        rf.fit(train_features, train_labels);
+
+        predictions = rf.predict(val_features)
+        loss = log_loss(val_labels,predictions)
+        if loss<minlog:
+
+
+            minlog = loss
+            best_max_depth = max_depth
+            print(minlog, best_max_depth)
+
+    '''
+    '''
+    max_features = best_max_features
+    max_depth = best_max_depth
+    min_samples_split =  2
+    min_samples_leaf = 1
+    max_leaf_nodes = None
+    minlog = 1
+    print("MIN SAMPLES SPLIT")
+    for i in range(1,50):
+        min_samples_split = i+1
+        # Instantiate model with 1000 decision trees
+        rf = ExtraTreesRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
+        # Train the model on training data
+        rf.fit(train_features, train_labels);
+
+        predictions = rf.predict(val_features)
+        loss = log_loss(val_labels,predictions)
+        if loss<minlog:
+
+
+            minlog = loss
+            best_min_samples_split = min_samples_split
+            print(minlog, min_samples_split)
+
+    max_features = best_max_features
+    max_depth = best_max_depth
+    min_samples_split =  best_min_samples_split
+    min_samples_leaf = 1
+    max_leaf_nodes = None
+    minlog = 1
+    print("MIN SAMPLES LEAF")
+    for i in range(0,50):
+        min_samples_leaf = i+1
+        # Instantiate model with 1000 decision trees
+        rf = ExtraTreesRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
+        # Train the model on training data
+        rf.fit(train_features, train_labels);
+
+        predictions = rf.predict(val_features)
+        loss = log_loss(val_labels,predictions)
+        if loss<minlog:
+
+
+            minlog = loss
+            best_min_samples_leaf = min_samples_leaf
+            print(minlog, min_samples_leaf)
+
+
+    max_features = best_max_features
+    max_depth = best_max_depth
+    min_samples_split =  best_min_samples_split
+    min_samples_leaf = best_min_samples_leaf
+    max_leaf_nodes = None
+    minlog = 1
+    print("MAX LEAF NODES")
+    for i in range(0,100):
+        max_leaf_nodes = i+1
+        # Instantiate model with 1000 decision trees
+        rf = ExtraTreesRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
+        # Train the model on training data
+        rf.fit(train_features, train_labels);
+
+        predictions = rf.predict(val_features)
+        loss = log_loss(val_labels,predictions)
+        if loss<minlog:
+
+
+            minlog = loss
+            best_max_leaf_nodes = max_leaf_nodes
+            print(minlog, max_leaf_nodes)
+    '''
     '''
     train_features, test_features, train_labels, test_labels = train_test_split_season(features,validation = False)
 
+    max_features = 25
+    max_depth = 15
+    min_samples_split =  2
+    min_samples_leaf = 1
+    max_leaf_nodes = 206
     print('Training Features Shape:', train_features.shape)
     print('Training Labels Shape:', train_labels.shape)
     print('Testing Features Shape:', test_features.shape)
     print('Testing Labels Shape:', test_labels.shape)
 
     # Instantiate model with 1000 decision trees
-    rf = RandomForestRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
+    rf = ExtraTreesRegressor(n_estimators = 100, random_state = 42, max_features = max_features, max_depth = max_depth, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, max_leaf_nodes = max_leaf_nodes)
 
     # Train the model on training data
     rf.fit(train_features, train_labels);
 
     # Use the forest's predict method on the test data
     predictions = rf.predict(test_features)
-    print(compute_log_loss(test_labels,predictions))
+    print(log_loss(test_labels,predictions))
     '''
 
 

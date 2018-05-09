@@ -52,7 +52,7 @@ def computepfx(dfAtBat):
 	#dfPFX = dfPFX.head(50)
 	#
 
-	dfPFX['date'] = dfPFX.date.apply(lambda dt: "20" + datetime.datetime.strptime(dt, '%m/%d/%y').strftime('%y-%m-%d'))
+	#dfPFX['date'] = dfPFX.date.apply(lambda dt: "20" + datetime.datetime.strptime(dt, '%m/%d/%y').strftime('%y-%m-%d'))
 
 
 	dfPFX['ss'] = np.where(dfPFX['descr']=='Swinging Strike', 1, 0) + np.where(dfPFX['descr']=='Foul Tip', 1, 0)

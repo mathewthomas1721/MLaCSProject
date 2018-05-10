@@ -11,8 +11,6 @@ DATA_PATH = "../Data/"
 WRITE_PATH= "../Data/OutData/"
 FIG_PATH = "../Figs/"
 #POST_SEASON_ALL = DATA_PATH + "AtBats_PostSeason_2012-2017_sorted.csv"
-REG_SEASON_PFX = DATA_PATH + "MLB_PitchFX_2012/MLB_PitchFX_RegularSeason_2012_sorted.csv"
-REG_SEASON_AB = DATA_PATH + "MLB_AtBats_RegularSeason_2012_sorted.csv"
 #SPRING_TRN_ALL = DATA_PATH + "AtBats_SpringTraining_2012-2017_sorted.csv"
 PFXN = 25.0
 
@@ -45,7 +43,11 @@ def accumulate_Pitcher(df, lavg):
 	return allpitchers
 
 
-def computepfx(dfAtBat):
+def computepfx(dfAtBat, year):
+
+	REG_SEASON_PFX = DATA_PATH + "MLB_PitchFX_" + year +"/MLB_PitchFX_RegularSeason_" + year +"_sorted.csv"
+	REG_SEASON_AB = DATA_PATH + "MLB_AtBats_RegularSeason_" + year +"_sorted.csv"
+
 	dfPFX = pd.read_csv(REG_SEASON_PFX)
 	dfPFX  = dfPFX.drop(dfPFX.columns[dfPFX.columns.str.contains('unnamed',case = False)],axis = 1)
 	#

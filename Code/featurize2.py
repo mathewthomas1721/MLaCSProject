@@ -123,7 +123,7 @@ def main():
 	#print(dfRegSeasonfeat.info)
 
 
-	dfPFX, LAs = featurizepfx.computepfx(dfRegSeason)
+	dfPFX, LAs = featurizepfx.computepfx(dfRegSeason, year)
 	dfRegSeasonfeat['off_score'] = dfRegSeasonfeat['top'] * dfRegSeasonfeat['away_score'] + dfRegSeasonfeat['bottom'] * dfRegSeasonfeat['home_score']
 	dfRegSeasonfeat['abhash'] = dfRegSeasonfeat['date'].apply(str) + "_" + dfRegSeasonfeat['pitcher'] + dfRegSeasonfeat['batter'] + dfRegSeasonfeat['inning'].apply(str) + "_" + dfRegSeasonfeat['off_score'].apply(str)
 	dfRegSeasonfeat = pd.merge(dfRegSeasonfeat, dfPFX, how='left', left_on = 'abhash', right_on = 'abhash')

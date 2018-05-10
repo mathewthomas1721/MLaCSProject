@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression as LogisticModel
 
+import featurizepfx
+
 
 year = sys.argv[1]
 
@@ -40,7 +42,7 @@ def getRatesPitcher(df, league_avg):
 		dfpitcher.cumpitcherk = dfpitcher.cumpitcherk.fillna(0)
 		dfpitcher['pitcherkrate'] = (dfpitcher['cumpitcherk'] - dfpitcher['y'] + league_avg ) / (dfpitcher.index + N)
 		pitcherdfs.append(dfpitcher)
-		for wind, window_size in enumerate([151, 71, 26,21,11,6]):
+		for wind, window_size in enumerate([151, 71, 26]):
 			dfpitcher['wind' + str(wind) + 'pkrate'] = (dfpitcher.y.rolling(window_size).sum() - dfpitcher['y']) / (window_size - 1)
 			dfpitcher['wind' + str(wind) + 'pkrate'] = dfpitcher['wind' + str(wind) + 'pkrate'].fillna(dfpitcher.pitcherkrate)
 			
@@ -64,7 +66,7 @@ def getRatesBatter(df, league_avg):
 		dfbatter.cumbatterk = dfbatter.cumbatterk.fillna(0)
 		dfbatter['batterkrate'] = (dfbatter['cumbatterk'] - dfbatter['y'] + league_avg) / (dfbatter.index + N)
 		batterdfs.append(dfbatter)
-		for wind, window_size in enumerate([151, 61, 26,21,11,6]):
+		for wind, window_size in enumerate([151, 61, 26]):
 			dfbatter['wind' + str(wind) + 'bkrate'] = (dfbatter.y.rolling(window_size).sum() - dfbatter['y']) / (window_size - 1)
 			dfbatter['wind' + str(wind) + 'bkrate'] = dfbatter['wind' + str(wind) + 'bkrate'].fillna(dfbatter.batterkrate)
 	allbatters = pd.concat(batterdfs, axis=0)
@@ -117,15 +119,31 @@ def main():
 	oneHotHand = pd.get_dummies(dfboth['matchup'])
 	#print(oneHotHand.head(1))
 
-
 	dfRegSeasonfeat = pd.concat([dfRegSeason, oneHotstad, oneHotbase, oneHotside, oneHotinning, oneHotouts, oneHotHand], axis=1)
 	#print(dfRegSeasonfeat.info)
+
+
+	dfPFX, LAs = featurizepfx.computepfx(dfRegSeason)
+	dfRegSeasonfeat['off_score'] = dfRegSeasonfeat['top'] * dfRegSeasonfeat['away_score'] + dfRegSeasonfeat['bottom'] * dfRegSeasonfeat['home_score']
+	dfRegSeasonfeat['abhash'] = dfRegSeasonfeat['date'].apply(str) + "_" + dfRegSeasonfeat['pitcher'] + dfRegSeasonfeat['batter'] + dfRegSeasonfeat['inning'].apply(str) + "_" + dfRegSeasonfeat['off_score'].apply(str)
+	dfRegSeasonfeat = pd.merge(dfRegSeasonfeat, dfPFX, how='left', left_on = 'abhash', right_on = 'abhash')
+	for key in LAs:
+		dfRegSeasonfeat['cum' + key] = dfRegSeasonfeat['cum' + key].fillna(LAs[key])
+
+
+
 	
 	dfRegSeasonfeat['score'] = ((-1) ** dfRegSeasonfeat['top']) * (dfRegSeasonfeat['home_score'] - dfRegSeasonfeat['away_score'])
-	dfRegSeasonfeat =  dfRegSeasonfeat.drop(['visitor','home', 'cumbatterk','cumpitcherk','index', 'side', 'stadium', 'bases', 'home_score', 'away_score', 'descr', 'date', 'inning', 'outs', 'batter', 'pitcher'], axis=1)
-	print(dfRegSeasonfeat)
+	dfRegSeasonfeat =  dfRegSeasonfeat.drop(['abhash','off_score','visitor','home', 'cumbatterk','cumpitcherk','index', 'side', 'stadium', 'bases', 'home_score', 'away_score', 'descr', 'date', 'inning', 'outs'], axis=1)
 	dfRegSeasonfeat  = dfRegSeasonfeat.drop(dfRegSeasonfeat.columns[dfRegSeasonfeat.columns.str.contains('unnamed',case = False)],axis = 1)
 	#dfRegSeasonfeat = dfRegSeasonfeat.head(1025296)
+	print(dfRegSeasonfeat)
+
+	cols = ['y', 'pitcher', 'batter', 'score', 'cumnasty','cumss', 'cumcs'] 
+	cols += [col for col in dfRegSeasonfeat if not (col in cols)]
+	dfRegSeasonfeat = dfRegSeasonfeat[cols]
+	print(dfRegSeasonfeat)
+
 	dfRegSeasonfeat.to_csv(DATA_PATH + "RegularSeasonFeatures" + year + ".csv")
 
 	

@@ -8,7 +8,7 @@ from sklearn.linear_model import LogisticRegression as LogisticModel
 
 
 
-DATA_PATH = "../Data/MLB_PitchFX_2012/"
+DATA_PATH = "../Data/MLB_PitchFX_" + year + "/"
 WRITE_PATH= "../Data/OutData/"
 FIG_PATH = "../Figs/"
 year = sys.argv[1]

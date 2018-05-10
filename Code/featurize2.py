@@ -43,8 +43,8 @@ def getRatesPitcher(df, league_avg):
 		dfpitcher['pitcherkrate'] = (dfpitcher['cumpitcherk'] - dfpitcher['y'] + league_avg ) / (dfpitcher.index + N)
 		pitcherdfs.append(dfpitcher)
 		for wind, window_size in enumerate([151, 71, 26]):
-			dfpitcher['wind' + str(wind) + 'pkrate'] = (dfpitcher.y.rolling(window_size).sum() - dfpitcher['y']) / (window_size - 1)
-			dfpitcher['wind' + str(wind) + 'pkrate'] = dfpitcher['wind' + str(wind) + 'pkrate'].fillna(dfpitcher.pitcherkrate)
+			dfpitcher['wind' + str(wind) + 'pkrate'] = (dfpitcher.y.rolling(window_size).sum() - dfpitcher['y']) / (window_size - 1) - dfpitcher['pitcherkrate']
+			dfpitcher['wind' + str(wind) + 'pkrate'] = dfpitcher['wind' + str(wind) + 'pkrate'].fillna(0.0)
 			
 	allpitchers = pd.concat(pitcherdfs, axis=0)
 	allpitchers = allpitchers.drop(['y', 'pitcher', 'batter'],axis=1)
@@ -67,8 +67,8 @@ def getRatesBatter(df, league_avg):
 		dfbatter['batterkrate'] = (dfbatter['cumbatterk'] - dfbatter['y'] + league_avg) / (dfbatter.index + N)
 		batterdfs.append(dfbatter)
 		for wind, window_size in enumerate([151, 61, 26]):
-			dfbatter['wind' + str(wind) + 'bkrate'] = (dfbatter.y.rolling(window_size).sum() - dfbatter['y']) / (window_size - 1)
-			dfbatter['wind' + str(wind) + 'bkrate'] = dfbatter['wind' + str(wind) + 'bkrate'].fillna(dfbatter.batterkrate)
+			dfbatter['wind' + str(wind) + 'bkrate'] = (dfbatter.y.rolling(window_size).sum() - dfbatter['y']) / (window_size - 1) - dfbatter['batterkrate']
+			dfbatter['wind' + str(wind) + 'bkrate'] = dfbatter['wind' + str(wind) + 'bkrate'].fillna(0.0)
 	allbatters = pd.concat(batterdfs, axis=0)
 	allbatters = allbatters.drop(['y', 'pitcher', 'batter'],axis=1)
 	return allbatters
@@ -127,6 +127,23 @@ def main():
 	dfRegSeasonfeat['off_score'] = dfRegSeasonfeat['top'] * dfRegSeasonfeat['away_score'] + dfRegSeasonfeat['bottom'] * dfRegSeasonfeat['home_score']
 	dfRegSeasonfeat['abhash'] = dfRegSeasonfeat['date'].apply(str) + "_" + dfRegSeasonfeat['pitcher'] + dfRegSeasonfeat['batter'] + dfRegSeasonfeat['inning'].apply(str) + "_" + dfRegSeasonfeat['off_score'].apply(str)
 	dfRegSeasonfeat = pd.merge(dfRegSeasonfeat, dfPFX, how='left', left_on = 'abhash', right_on = 'abhash')
+	dfRegSeasonfeat['spinvsavg'] = dfRegSeasonfeat.spinvsavg.fillna(0.0)
+	dfRegSeasonfeat['windnasty'] = dfRegSeasonfeat.windnasty.fillna(0.0)
+	dfRegSeasonfeat['windss'] = dfRegSeasonfeat.windss.fillna(0.0)
+	dfRegSeasonfeat['windcs'] = dfRegSeasonfeat.windcs.fillna(0.0)
+	dfRegSeasonfeat['windO_swing'] = dfRegSeasonfeat.windO_swing.fillna(0.0)
+	dfRegSeasonfeat['windO_swing_batter'] = dfRegSeasonfeat.windO_swing_batter.fillna(0.0)
+	dfRegSeasonfeat['windss_batter'] = dfRegSeasonfeat.windss_batter.fillna(0.0)
+	dfRegSeasonfeat['windcs_batter'] = dfRegSeasonfeat.windcs_batter.fillna(0.0)
+	dfRegSeasonfeat['windfbsspeed'] = dfRegSeasonfeat.windfbsspeed.fillna(0.0)
+	dfRegSeasonfeat['windfbespeed'] = dfRegSeasonfeat.windfbespeed.fillna(0.0)
+	dfRegSeasonfeat['windfbspin'] = dfRegSeasonfeat.windfbspin.fillna(0.0)
+	dfRegSeasonfeat['windfbpfx_x'] = dfRegSeasonfeat.windfbpfx_x.fillna(0.0)
+	dfRegSeasonfeat['windfbpfx_z'] = dfRegSeasonfeat.windfbpfx_z.fillna(0.0)
+
+
+
+
 	for key in LAs:
 		dfRegSeasonfeat['cum' + key] = dfRegSeasonfeat['cum' + key].fillna(LAs[key])
 
@@ -134,12 +151,12 @@ def main():
 
 	
 	dfRegSeasonfeat['score'] = ((-1) ** dfRegSeasonfeat['top']) * (dfRegSeasonfeat['home_score'] - dfRegSeasonfeat['away_score'])
-	dfRegSeasonfeat =  dfRegSeasonfeat.drop(['abhash','off_score','visitor','home', 'cumbatterk','cumpitcherk','index', 'side', 'stadium', 'bases', 'home_score', 'away_score', 'descr', 'date', 'inning', 'outs'], axis=1)
+	dfRegSeasonfeat =  dfRegSeasonfeat.drop(['abhash','off_score','visitor','home', 'cumbatterk','cumpitcherk','index', 'side', 'bases', 'home_score', 'away_score', 'descr', 'date', 'inning', 'outs'], axis=1)
 	dfRegSeasonfeat  = dfRegSeasonfeat.drop(dfRegSeasonfeat.columns[dfRegSeasonfeat.columns.str.contains('unnamed',case = False)],axis = 1)
 	#dfRegSeasonfeat = dfRegSeasonfeat.head(1025296)
 	print(dfRegSeasonfeat)
 
-	cols = ['y', 'pitcher', 'batter', 'score', 'cumnasty','cumss', 'cumcs'] 
+	cols = ['y', 'pitcher', 'batter', 'stadium', 'score', 'cumnasty', 'cumss', 'cumcs','cumO_swing', 'cumfbsspeed', 'cumfbespeed', 'cumfbspin', 'cumfbpfx_x', 'cumfbpfx_z','cumss_batter', 'cumcs_batter', 'cumO_swing_batter',  'spinvsavg', 'windnasty', 'windss', 'windcs', 'windO_swing', 'windfbespeed', 'windfbsspeed', 'windfbspin', 'windfbpfx_x', 'windfbpfx_z', 'windO_swing', 'windO_swing_batter', 'windss_batter', 'windcs_batter'] 
 	cols += [col for col in dfRegSeasonfeat if not (col in cols)]
 	dfRegSeasonfeat = dfRegSeasonfeat[cols]
 	print(dfRegSeasonfeat)

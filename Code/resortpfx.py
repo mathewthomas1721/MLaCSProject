@@ -7,11 +7,11 @@ from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression as LogisticModel
 
 
-
+year = sys.argv[1]
 DATA_PATH = "../Data/MLB_PitchFX_" + year + "/"
 WRITE_PATH= "../Data/OutData/"
 FIG_PATH = "../Figs/"
-year = sys.argv[1]
+
 
 
 

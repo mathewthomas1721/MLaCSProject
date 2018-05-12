@@ -1,186 +1,67 @@
-"""
-Python code to create a few baseline models for analyzing performance
-
-
-
-@Authors:
-    James Bannon
-
-"""
-
 import numpy as np
 import pandas as pd
 import scipy as sp
 import sys
 import matplotlib.pyplot as plt
+from tt_split import *
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+[from sklearn.metrics import roc_auc_score, roc_curve]
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression as LogisticModel
-
-DATA_PATH = "../Data/"
-WRITE_PATH= "../Data/OutData/"
-FIG_PATH = "../Figs/"
-POST_SEASON_ALL = DATA_PATH +"AtBats_PostSeason_2012-2017_update.csv"
-REG_SEASON_ALL = DATA_PATH +"AtBats_RegularSeason_2012-2017_update.csv"
-SPRING_TRN_ALL = DATA_PATH + "AtBats_SpringTraining_2012-2017_update.csv"
+from sklearn.metrics import log_loss, make_scorer
+FIG_PATH="../Figs/"
+DATA_PATH="../Data/"
 
 
-def train_test_split(seas_df,t=.75,mode="dummy"):
+def plot_roc(y_true, y_hat,title,fname):
+    roc_auc = roc_auc_score(y_true, y_hat)
+    fpr, tpr ,thresh=  roc_curve(y_true, y_hat)
+    plt.title(title)
+    plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
+    plt.legend(loc = 'lower right')
+    plt.plot([0, 1], [0, 1],'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.savefig(FIG_PATH+fname)
+    plt.show()
+    plt.close()
 
-    if mode=="dummy":
-        num_train = int(np.round(t*seas_df.shape[0]))
-        num_test = int(seas_df.shape[0]-num_train)
-
-        train = seas_df.head(num_train)
-        test = seas_df.tail(num_test)
-
-
-        trn_x = np.array(train['inning']).reshape((num_train,1))
-        trn_y = np.array(train['y'])
-
-        tst_x = np.array(test['inning']).reshape((num_test,1))
-        tst_y = np.array(test['y'])
-        ## need to reshape so sklearn will work with it, otherwise throws a value error later
-        return trn_x,tst_x,trn_y,tst_y
-    else:
-         ##TODO: alter to return useful info for logistic regression, SVC
-        num_train = int(np.round(t*seas_df.shape[0]))
-        num_test = int(seas_df.shape[0]-num_train)
-        train = seas_df.head(num_train)
-        test = seas_df.tail(num_test)
-
-        pitchers = seas_df.pitcher.unique()
-        print(pitchers)
-        for pitcher in pitchers:
-            temp = train.loc[train['pitcher']==pitcher]
-            print(temp.head())
-        batters = seas_df.batter.unique()
-        print(batters)
-        return 0
-
-"""
-returns a data frame with season
-"""
-def season_subset(year):
-
+def plot_logloss(seasons,array):
+    min_x = int(seasons[0])
+    max_x=int(seasons[-1])
+    plt.scatter(seasons,results)
+    plt.title("Log Loss of Gradient Boosting Classifier Across Seasons")
+    plt.xlabel("Season")
+    plt.xticks(np.arange(min_x,max_x+1),seasons)
+    plt.ylabel("Log Loss")
+    plt.savefig("../Figs/GBM_results.pdf")
+    plt.show()
+    plt.close()
     pass
 
-
-
-def display_results(Years,performance,name):
-    print("Year\t Score")
-    of = open(WRITE_PATH+name+".txt","w")
-    of.write("Year\t Score\n")
-    for j in range(len(Years)):
-        print(str(Years[j])+" \t "+ str(performance[j]))
-        of.write(str(Years[j])+" \t "+ str(performance[j]))
-    print("average score:" + str(np.mean(performance)))
-    of.write("Average Score:\t"+ str(np.mean(performance)))
-    of.write("\n")
-    of.write("Score is percentage correct")
-    of.close()
-
-
-"""
- Runs majority classifier
-
-"""
-
-def Majority_Classifier(dfAtBats):
-    Years=np.arange(2012,2018)
-    performance = np.ones(len(Years))
-    for i in range(len(Years)):
-        year = Years[i]
-        curr_seas = dfAtBats.loc[dfAtBats['year']==year]
-        X_train,X_test,y_train,y_test = train_test_split(curr_seas)
-        clf = DummyClassifier(strategy='most_frequent',random_state=0)
-        clf.fit(X_train,y_train)
-        score=clf.score(X_train,y_train)
-        plt.plot([year],[score],marker='o')
-        performance[i]=score
-    display_results(Years,performance,name="Majority_Classifier_Results")
-    ax = plt.subplot(111)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    plt.title("Percent Correct by Majority Classifier By Year")
-    plt.xlabel("Year")
-    plt.ylabel("Percent Correct")
-    plt.savefig(FIG_PATH+"Majority_Classifier.pdf")
-    plt.close()
-
-
-
-
-def Dummy_Classifier(dfAtBats,strat):
-    Years=np.arange(2012,2018)
-    performance = np.ones(len(Years))
-    for i in range(len(Years)):
-        year = Years[i]
-        curr_seas = dfAtBats.loc[dfAtBats['year']==year]
-        X_train,X_test,y_train,y_test = train_test_split(curr_seas)
-        clf = DummyClassifier(strategy='most_frequent',random_state=0)
-        clf.fit(X_train,y_train)
-        score=clf.score(X_train,y_train)
-        plt.plot([year],[score],marker='o')
-        performance[i]=score
-    display_results(Years,performance,name=str(strat)+"_Classifier_Results")
-    ax = plt.subplot(111)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    plt.title("Percent Correct by "+str(strat)+ " Classifier By Year")
-    plt.xlabel("Year")
-    plt.ylabel("Percent Correct")
-    plt.savefig(FIG_PATH+str(strat)+"_Classifier.pdf")
-    plt.close()
-
-"""
-    Tries dummy classifiers for all possible strategies, wrapper function
-
-"""
-def All_Dummy_Classifiers(dfAtBats):
-    strategies=["stratified","most_frequent","prior","uniform","constant"]
-    for strat in strategies:
-        Dummy_Classifier(dfAtBats,strat)
-
-
+def basic_probability_guessing(y_train,y_test):
+    p = np.mean(y_train)
+    y_hat = [p]*len(y_test)
+    return log_loss(y_test,y_hat), y_hat
 
 def main():
 
-    ### ---- Prepreocess Season Data --- ###
-        # gives a column indexing season by year
-        # binarizes the outcome of strikeouts to be 1 (yes strikeout) and 0 (not strikeout)
-        #TODO: establish unique within-season game ID numbers so we can analyze 'first k games' etc.
-             # will also make adding in pitchfx data easier
+    Seasons = ["2012","2013","2014","2015","2016","2017"]
+    Seasons = ["2012"]
 
-
-    dfRegSeason = pd.read_csv("../Data/RegularSeasonFeatures2012.csv")
-    dfRegSeason['y'] = np.where(dfRegSeason['descr']=='Strikeout', 1, 0)
-    dfRegSeason['year'] = pd.DatetimeIndex(dfRegSeason['date']).year
-
-    ## commented out for runtime, should be pre-processed
-
-    #dfPostSeason = pd.read_csv(POST_SEASON_ALL)
-    #dfSpringTrn = pd.read_csv(SPRING_TRN_ALL)
-
-
-
-    ### ---- Majority Classifier --- ###
-
-
-    Majority_Classifier(dfRegSeason)
-    All_Dummy_Classifiers(dfRegSeason)
-
-
-    ### --- Logistic Regression --- ###
-
-    ##TODO: write this code
-
-    train_test_split(dfRegSeason,mode="features")
-    ### --- Basic Support Vector Classifier --- ###
-    #TODO: decide if we want to use this as a baseline or as a first model in the actual project
-
-
-    ### --- Perceptron --- ###
-    #TODO: decide if we want to use this as a baseline or as a first model in the actual project
+    for season in Seasons:
+        fname = DATA_PATH+"RegularSeasonFeatures"+str(season)+".csv"
+        df = pd.read_csv(fname,index_col=0)
+        X_train,X_test,y_train,y_test = train_test_split_season(df)
+        ll,y_hat = basic_probability_guessing(y_train,y_test)
+        plot_roc(y_test,y_hat,"ROC Curve "+str(season)+" Dummy Classifier \n Log Loss:"+str(ll),"Dummy_ROC_Curve"+str(season)+".pdf")
+        lme_file = DATA_PATH+"lme_"+str(season)+".csv"
+        y_hat_lme = pd.read_csv(lme_file,index_col=0).as_matrix().reshape(-1,1)
+        lme_ll=log_loss(y_test,y_hat_lme)
+        plot_roc(y_test,y_hat,"ROC Curve "+str(season)+" LME\n Log Loss:"+str(lme_ll),"LME_ROC_Curve"+str(season)+".pdf")
 
 
 if __name__=="__main__":

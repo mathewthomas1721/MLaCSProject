@@ -1,0 +1,4 @@
+Results for Ada in 2016
+	 numeric log loss: 0.650830241407
+	 categorical log loss: 0.656437725271
+	 full model loss: 0.651652714052

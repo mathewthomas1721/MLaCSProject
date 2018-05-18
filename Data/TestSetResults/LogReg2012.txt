@@ -1,0 +1,4 @@
+Results for LogReg in 2012
+	 numeric log loss: 0.69139577423
+	 categorical log loss: 0.501379790491
+	 full model loss: 0.487460407886

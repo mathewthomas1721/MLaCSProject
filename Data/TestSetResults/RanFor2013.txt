@@ -1,0 +1,4 @@
+Results for RanFor in 2013
+	 numeric log loss: 0.490888081493
+	 categorical log loss: 0.502572306124
+	 full model loss: 0.49180435961

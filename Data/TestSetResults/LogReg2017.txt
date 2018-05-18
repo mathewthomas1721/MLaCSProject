@@ -1,0 +1,4 @@
+Results for LogReg in 2017
+	 numeric log loss: 0.508171728309
+	 categorical log loss: 0.52308747278
+	 full model loss: 0.507200144991

@@ -1,0 +1,4 @@
+Results for MLP in 2016
+	 numeric log loss: 0.504457709959
+	 categorical log loss: 0.517911198902
+	 full model loss: 0.503781413984

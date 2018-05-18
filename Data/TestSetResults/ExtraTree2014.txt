@@ -1,0 +1,4 @@
+Results for ExtraTree in 2014
+	 numeric log loss: 0.495400416858
+	 categorical log loss: 0.506153455123
+	 full model loss: 0.499347935807

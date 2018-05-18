@@ -1,0 +1,4 @@
+Results for GBM in 2017
+	 numeric log loss: 0.5094671196039688
+	 categorical log loss: 0.5229980291708742
+	 full model loss: 0.5089954461179066

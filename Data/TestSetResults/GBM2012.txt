@@ -1,0 +1,4 @@
+Results for GBM in 2012
+	 numeric log loss: 0.4888238491221204
+	 categorical log loss: 0.5014455107801231
+	 full model loss: 0.48788687627704713

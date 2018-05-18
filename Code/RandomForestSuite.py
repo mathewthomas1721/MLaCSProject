@@ -96,7 +96,7 @@ def evaluate_full(model, X_train, X_test, y_train, y_test, splitdex,name,scale=T
 def make_categorical_only(X_train,X_val, y_train,y_val, catdex):
 
 	print("making categorical only")
-	pgrid={'n_estimators':[5,10,100,200],'max_depth':[1,3,5,7,10],'min_samples_leaf':[2,3,4],'max_leaf_nodes':[7,10,50,100]}
+	pgrid={'n_estimators':[20,50,100],'max_depth':[7,10,20]}
 	X_train =X_train[:,catdex:]
 	X_val = X_val[:,catdex:]
 	best_cat_model, ParamDict= cross_validate(X_train, X_val, y_train, y_val,pgrid)
@@ -106,7 +106,7 @@ def make_numeric_only(X_train,X_val, y_train, y_val, numdex, scale=True):
 
 
 	print("making numeric only")
-	pgrid={'n_estimators':[5,10,100,200],'max_depth':[1,3,5,7,10],'min_samples_leaf':[2,3,4],'max_leaf_nodes':[7,10,50,100]}
+	pgrid={'n_estimators':[20,50,100],'max_depth':[7,10,20]}
 
 	X_train = X_train[:,0:numdex]
 	X_val = X_val[:,0:numdex]
@@ -121,7 +121,7 @@ def make_numeric_only(X_train,X_val, y_train, y_val, numdex, scale=True):
 def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	print("making full model")
 
-	pgrid={'n_estimators':[5,10,100,200],'max_depth':[1,3,5,7,10],'min_samples_leaf':[2,3,4],'max_leaf_nodes':[7,10,50,100]}
+	pgrid={'n_estimators':[20,50,100],'max_depth':[7,10,20]}
 
 	if scale:
 		scaler = StandardScaler()
@@ -133,12 +133,12 @@ def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	return best_full_model
 
 
-def write_text(numeric,cat,full,fname,season,model_type="Random Forest"):
+def write_text(full,fname,season,model_type="Adaboost Classifier"):
 	ostream = open(fname, "w")
 	ostream.write("Results for "+str(model_type)+" in "+str(season)+"\n")
-	ostream.write("\t numeric log loss: "+str(numeric)+"\n")
-	ostream.write("\t categorical log loss: "+str(numeric)+"\n")
-	ostream.write("\t full model loss: "+str(numeric)+"\n")
+	#ostream.write("\t numeric log loss: "+str(numeric)+"\n")
+	#ostream.write("\t categorical log loss: "+str(cat)+"\n")
+	ostream.write("\t full model loss: "+str(full)+"\n")
 	ostream.close()
 
 def main():
@@ -181,10 +181,10 @@ def main():
 
 		#entropy
 		#refit the models, evaluate them, and pickle them
-		y_hat_n,ll_n = evaluate_numeric(numeric_model,X_train,X_test,y_train,y_test,num_dex, "./Models/RanFor_num_"+str(season)+".pkl")
-		y_hat_c, ll_c = evaluate_categorical(cat_model,X_train,X_test,y_train,y_test,num_dex, "./Models/RanFor_cat_"+str(season)+".pkl")
+		#y_hat_n,ll_n = evaluate_numeric(numeric_model,X_train,X_test,y_train,y_test,num_dex, "./Models/RanFor_num_"+str(season)+".pkl")
+		#y_hat_c, ll_c = evaluate_categorical(cat_model,X_train,X_test,y_train,y_test,num_dex, "./Models/RanFor_cat_"+str(season)+".pkl")
 		y_hat_f, ll_f = evaluate_full(full_model,X_train,X_test,y_train,y_test,num_dex, "./Models/RanFor_full_"+str(season)+".pkl")
-		write_text(ll_n, ll_c, ll_f, "../Data/RanFor_results_"+str(season)+".txt",season)
+		write_text(ll_f, "../Data/RanFor_results_"+str(season)+".txt",season)
 
 #		plot_roc(y_test,[y_hat_n,y_hat_c,y_hat_f],"Random Forest ROC Curves " + str(season)+ " Season","../Figs/RanFor_ROC_"+str(season)+".pdf")
 

@@ -105,7 +105,7 @@ def evaluate_full(model, X_train, X_test, y_train, y_test, splitdex,name,scale=T
 def make_categorical_only(X_train,X_val, y_train,y_val, catdex):
 
 	print("making categorical only")
-	pgrid={'n_estimators':[5,10,15,20,25],'max_depth':[7,10,12,15,17,20],'criterion':['gini','entropy']}
+	pgrid={'n_estimators':[10,15,20],'max_depth':[10,15,20],'criterion':['gini','entropy']}
 	X_train =X_train[:,catdex:]
 	X_val = X_val[:,catdex:]
 	best_cat_model, ParamDict= cross_validate(X_train, X_val, y_train, y_val,pgrid)
@@ -115,7 +115,7 @@ def make_numeric_only(X_train,X_val, y_train, y_val, numdex, scale=True):
 
 
 	print("making numeric only")
-	pgrid={'n_estimators':[5,10,15,20,25],'max_depth':[7,10,12,15,17,20],'criterion':['gini','entropy']}
+	pgrid={'n_estimators':[10,15,20],'max_depth':[10,15,20],'criterion':['gini','entropy']}
 
 
 	X_train = X_train[:,0:numdex]
@@ -131,7 +131,7 @@ def make_numeric_only(X_train,X_val, y_train, y_val, numdex, scale=True):
 def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	print("making full model")
 
-	pgrid={'n_estimators':[5,10,15,20,25],'max_depth':[7,10,12,15,17,20],'criterion':['gini','entropy']}
+	pgrid={'n_estimators':[10,15,20],'max_depth':[10,15,20],'criterion':['gini','entropy']}
 	if scale:
 		scaler = StandardScaler()
 		scaler.fit(X_train[:,0:splitdex])
@@ -142,14 +142,14 @@ def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	return best_full_model
 
 
-def write_text(numeric,cat,full,fname,season,model_type="Extra Trees"):
+def write_text(numeric,cat,full,fname,season,model_type="Adaboost Classifier"):
 	ostream = open(fname, "w")
 	ostream.write("Results for "+str(model_type)+" in "+str(season)+"\n")
 	ostream.write("\t numeric log loss: "+str(numeric)+"\n")
-	ostream.write("\t categorical log loss: "+str(numeric)+"\n")
-	ostream.write("\t full model loss: "+str(numeric)+"\n")
+	ostream.write("\t categorical log loss: "+str(cat)+"\n")
+	ostream.write("\t full model loss: "+str(full)+"\n")
 	ostream.close()
-
+	
 def main():
 
 
@@ -158,14 +158,14 @@ def main():
 		print("Fitting "+str(season)+" season")
 		file_name = "../Data/RegularSeasonFeatures"+str(season)+".csv"
 		df = pd.read_csv(file_name,index_col=0)
-		df['pitcherkrate'] = df['pitcherkrate'].apply(lambda x: scipy.special.logit(x))
-		df['wind0pkrate'] = df['wind0pkrate'].apply(lambda x: scipy.special.logit(x))
-		df['wind1pkrate'] = df['wind1pkrate'].apply(lambda x: scipy.special.logit(x))
-		df['wind2pkrate'] = df['wind2pkrate'].apply(lambda x: scipy.special.logit(x))
-		df['batterkrate'] = df['batterkrate'].apply(lambda x: scipy.special.logit(x))
-		df['wind0bkrate'] = df['wind0bkrate'].apply(lambda x: scipy.special.logit(x))
-		df['wind1bkrate'] = df['wind1bkrate'].apply(lambda x: scipy.special.logit(x))
-		df['wind2bkrate'] = df['wind2bkrate'].apply(lambda x: scipy.special.logit(x))
+		#df['pitcherkrate'] = df['pitcherkrate'].apply(lambda x: scipy.special.logit(x))
+		#df['wind0pkrate'] = df['wind0pkrate'].apply(lambda x: scipy.special.logit(x))
+		#df['wind1pkrate'] = df['wind1pkrate'].apply(lambda x: scipy.special.logit(x))
+		#df['wind2pkrate'] = df['wind2pkrate'].apply(lambda x: scipy.special.logit(x))
+		#df['batterkrate'] = df['batterkrate'].apply(lambda x: scipy.special.logit(x))
+		#df['wind0bkrate'] = df['wind0bkrate'].apply(lambda x: scipy.special.logit(x))
+		#df['wind1bkrate'] = df['wind1bkrate'].apply(lambda x: scipy.special.logit(x))
+		#df['wind2bkrate'] = df['wind2bkrate'].apply(lambda x: scipy.special.logit(x))
 
 		X_train, X_val, X_test, y_train, y_val, y_test = train_test_split_season(df,validation=True)
 
@@ -205,6 +205,6 @@ def main():
 		write_text(ll_n, ll_c, ll_f, "../Data/ExtraTree_results_"+str(season)+".txt",season)
 
 #		plot_roc(y_test,[y_hat_n,y_hat_c,y_hat_f],"Extra Tree ROC Curves " + str(season)+ " Season","../Figs/ExtraTree_ROC_"+str(season)+".pdf")
-		
+
 if __name__ == '__main__':
 	main()

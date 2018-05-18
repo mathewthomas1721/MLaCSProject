@@ -122,7 +122,7 @@ def make_numeric_only(X_train,X_val, y_train, y_val, numdex, scale=True):
 def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	print("making full model")
 	#pgrid={'hidden_layer_sizes':[(10,),(100,),(100,100),(10,20),(30,30,30,30),(100,100,100),(1000,)], 'activation':['tanh','relu'],'alpha':np.logspace(-5,-1,10)}
-	pgrid={'penalty':['l1','l2'],'C':'C':[1,10,100],'fit_intercept':[True,False]}
+	pgrid={'penalty':['l1','l2'],'C':[1,10,100],'fit_intercept':[True,False]}
 
 
 
@@ -136,12 +136,12 @@ def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	return best_full_model
 
 
-def write_text(numeric,cat,full,fname,season,model_type="Logistic Regression"):
+def write_text(numeric,cat,full,fname,season,model_type="Adaboost Classifier"):
 	ostream = open(fname, "w")
 	ostream.write("Results for "+str(model_type)+" in "+str(season)+"\n")
 	ostream.write("\t numeric log loss: "+str(numeric)+"\n")
-	ostream.write("\t categorical log loss: "+str(numeric)+"\n")
-	ostream.write("\t full model loss: "+str(numeric)+"\n")
+	ostream.write("\t categorical log loss: "+str(cat)+"\n")
+	ostream.write("\t full model loss: "+str(full)+"\n")
 	ostream.close()
 
 def ifoneorzero(x):

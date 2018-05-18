@@ -135,12 +135,12 @@ def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	return best_full_model
 
 
-def write_text(numeric,cat,full,fname,season,model_type="MLPClassifier"):
+def write_text(numeric,cat,full,fname,season,model_type="Adaboost Classifier"):
 	ostream = open(fname, "w")
 	ostream.write("Results for "+str(model_type)+" in "+str(season)+"\n")
 	ostream.write("\t numeric log loss: "+str(numeric)+"\n")
-	ostream.write("\t categorical log loss: "+str(numeric)+"\n")
-	ostream.write("\t full model loss: "+str(numeric)+"\n")
+	ostream.write("\t categorical log loss: "+str(cat)+"\n")
+	ostream.write("\t full model loss: "+str(full)+"\n")
 	ostream.close()
 
 def main():

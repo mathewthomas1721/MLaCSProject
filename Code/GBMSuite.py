@@ -96,7 +96,7 @@ def evaluate_full(model, X_train, X_test, y_train, y_test, splitdex,name,scale=T
 def make_categorical_only(X_train,X_val, y_train,y_val, catdex):
 
 	print("making categorical only")
-	pgrid={'loss':['deviance','exponential'],'n_estimators':[10,20,100,200],'max_depth':[3,5,7,15]}
+	pgrid={'loss':['deviance','exponential'],'n_estimators':[100],'max_depth':[2,7]}
 	X_train =X_train[:,catdex:]
 	X_val = X_val[:,catdex:]
 	best_cat_model, ParamDict= cross_validate(X_train, X_val, y_train, y_val,pgrid)
@@ -106,7 +106,7 @@ def make_numeric_only(X_train,X_val, y_train, y_val, numdex, scale=True):
 
 
 	print("making numeric only")
-	pgrid={'loss':['deviance','exponential'],'n_estimators':[10,20,100,200],'max_depth':[3,5,7,15]}
+	pgrid={'loss':['deviance','exponential'],'n_estimators':[100],'max_depth':[2,7]}
 	X_train = X_train[:,0:numdex]
 	X_val = X_val[:,0:numdex]
 	if scale:
@@ -120,7 +120,7 @@ def make_numeric_only(X_train,X_val, y_train, y_val, numdex, scale=True):
 def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	print("making full model")
 
-	pgrid={'loss':['deviance','exponential'],'n_estimators':[10,20,100,200],'max_depth':[3,5,7,15]}
+	pgrid={'loss':['deviance','exponential'],'n_estimators':[100],'max_depth':[2,7]}
 
 	if scale:
 		scaler = StandardScaler()
@@ -132,18 +132,19 @@ def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
 	return best_full_model
 
 
-def write_text(numeric,cat,full,fname,season,model_type="GBM Classifier"):
-	ostream = open(fname, "w")
-	ostream.write("Results for "+str(model_type)+" in "+str(season)+"\n")
-	ostream.write("\t numeric log loss: "+str(numeric)+"\n")
-	ostream.write("\t categorical log loss: "+str(numeric)+"\n")
-	ostream.write("\t full model loss: "+str(numeric)+"\n")
-	ostream.close()
+def write_text(numeric,cat,full,fname,season,model_type="Adaboost Classifier"):
+    ostream = open(fname, "w")
+    ostream.write("Results for "+str(model_type)+" in "+str(season)+"\n")
+    ostream.write("\t numeric log loss: "+str(numeric)+"\n")
+    ostream.write("\t categorical log loss: "+str(cat)+"\n")
+    ostream.write("\t full model loss: "+str(full)+"\n")
+    ostream.close()
+
 
 def main():
 
 
-	Seasons=["2012","2013","2014","2015","2016","2017"]
+	Seasons=["2014","2015"]
 	for season in Seasons:
 		print("Fitting "+str(season)+" season")
 		file_name = "../Data/RegularSeasonFeatures"+str(season)+".csv"
@@ -181,9 +182,9 @@ def main():
 
 		#refit the models, evaluate them, and pickle them
 		y_hat_n,ll_n = evaluate_numeric(numeric_model,X_train,X_test,y_train,y_test,num_dex, "./Models/GBM_num_"+str(season)+".pkl")
-		y_hat_c, ll_c = evaluate_categorical(cat_model,X_train,X_test,y_train,y_test,num_dex, "./Models/GBM_cat_"+str(season)+".pkl")
-		y_hat_f, ll_f = evaluate_full(full_model,X_train,X_test,y_train,y_test,num_dex, "./Models/GBM_full_"+str(season)+".pkl")
-		write_text(ll_n, ll_c, ll_f, "../Data/GBM_results_"+str(season)+".txt",season)
+        y_hat_c, ll_c = evaluate_categorical(cat_model,X_train,X_test,y_train,y_test,num_dex, "./Models/GBM_cat_"+str(season)+".pkl")
+        y_hat_f, ll_f = evaluate_full(full_model,X_train,X_test,y_train,y_test,num_dex, "./Models/GBM_full_"+str(season)+".pkl")
+        write_text(ll_n, ll_c, ll_f, "../Data/GBM_results_"+str(season)+".txt",season)
 
 		#plot_roc(y_test,[y_hat_n,y_hat_c,y_hat_f],"Gradient Boosting ROC Curves " + str(season)+ " Season","../Figs/GBM_ROC_"+str(season)+".pdf")
 

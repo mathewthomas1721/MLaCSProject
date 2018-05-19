@@ -86,11 +86,11 @@ mypath = "Models"
 #onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 #onlyfiles.sort()
 #print(onlyfiles)
-for season in ["2012","2013","2014","2015","2016","2017"]:
+for season in ["2012","2013"]:
     #files = [file for file in onlyfiles if season in file]
     #print(files)
     #What do i need? Diags for each type of classifier
-    for algo in ["GBM"]:#,"Ada","ExtraTree","LogReg","MLP","RanFor"]:
+    for algo in ["HybridLogReg"]:#,"Ada","ExtraTree","LogReg","MLP","RanFor"]:
         print(algo + season)
         numeric_model = joblib.load(mypath + "/" +  algo + "_full_" + season + ".pkl")
         cat_model = joblib.load(mypath + "/" + algo + "_cat_" + season + ".pkl")

@@ -20,43 +20,6 @@ DATA_PATH="../Data/"
 mypath = "Models"
 
 
-
-def plot_roc(y_true, y_hats,title,fname):
-
-	k_probs = np.zeros((len(y_true),len(y_hats)))
-	roc_auc=[]
-
-	for i in range(len(y_hats)):
-		k_probs[:,i]=y_hats[i][:,1]
-		roc_auc.append(roc_auc_score(y_true, k_probs[:,i]))
-	plt.figure()
-	colors = ['aqua', 'darkorange', 'cornflowerblue']
-	classes = ['numeric','categorical','full']
-	for k in range(len(y_hats)):
-		fpr, tpr,thresh = roc_curve(y_true,k_probs[:,k])
-		plt.plot(fpr, tpr, color=colors[k],label='{0} (area = {1:0.2f})'.format(classes[k], roc_auc[k]))
-	plt.title(title)
-	plt.legend(loc = 'lower right')
-	plt.plot([0, 1], [0, 1],'r--')
-	plt.xlim([0, 1])
-	plt.ylim([0, 1])
-	plt.ylabel('True Positive Rate')
-	plt.xlabel('False Positive Rate')
-	plt.savefig(FIG_PATH+fname)
-	#plt.show()
-	plt.close()
-
-def cross_validate(X_train, X_val,y_train, y_val,param_grid):
-	print("cross validating model.")
-	X_train_val = np.vstack((X_train, X_val))
-	y_train_val = np.concatenate((y_train, y_val))
-	val_fold = [-1]*len(X_train) + [0]*len(X_val) # 0 corresponds to validation
-	estimator_ = LogisticRegression()
-	grid = GridSearchCV(estimator_,param_grid,return_train_score=True,
-		cv = PredefinedSplit(test_fold=val_fold),refit = True,scoring = 'neg_log_loss',verbose=3)
-	grid.fit(X_train_val, y_train_val)
-	return grid.best_estimator_, grid.cv_results_['params'][grid.best_index_]
-
 def evaluate_numeric(model,X_train, X_test, y_train,y_test,numdex,name,scale=True):
 	X_train = X_train[:,0:numdex]
 	X_test = X_test[:,0:numdex]
@@ -106,37 +69,6 @@ def evaluate_full1(model, X_train, X_test, y_train, y_test, splitdex,scale=True)
 	y_hat = model.predict_proba(X_test)
 	ll = log_loss(y_test,y_hat)
 	return y_hat,ll
-
-def make_categorical_only(X_train,X_val, y_train,y_val, catdex):
-	#pgrid={'hidden_layer_sizes':[(10,),(100,),(100,100),(10,20),(30,30,30,30),(100,100,100),(1000,)], 'activation':['tanh','relu'],'alpha':np.logspace(-5,-1,10)}
-	print("making categorical only")
-	pgrid={'penalty':['l1','l2'],'C':[1,10,100],'fit_intercept':[True,False]}
-	X_train =X_train[:,catdex:]
-	X_val = X_val[:,catdex:]
-	best_cat_model, ParamDict= cross_validate(X_train, X_val, y_train, y_val,pgrid)
-	return best_cat_model
-
-def make_numeric_only(X_train,X_val, y_train, y_val, numdex, scale=True):
-	#pgrid={'hidden_layer_sizes':[(10,),(100,),(100,100),(10,20),(30,30,30,30),(100,100,100),(1000,)], 'activation':['tanh','relu'],'alpha':np.logspace(-5,-1,10)}
-
-	print("making numeric only")
-	pgrid={'penalty':['l1','l2'],'C':[1,10,100],'fit_intercept':[True,False]}
-
-	X_train = X_train[:,0:numdex]
-	X_val = X_val[:,0:numdex]
-	if scale:
-		scaler = StandardScaler()
-		scaler.fit(X_train)
-		X_train=scaler.transform(X_train)
-		X_val=scaler.transform(X_val)
-	best_numeric_model, ParamDict= cross_validate(X_train, X_val, y_train, y_val,pgrid)
-	return best_numeric_model
-
-def make_full_model(X_train,X_val,y_train,y_val,splitdex,scale=True):
-	print("making full model")
-	#pgrid={'hidden_layer_sizes':[(10,),(100,),(100,100),(10,20),(30,30,30,30),(100,100,100),(1000,)], 'activation':['tanh','relu'],'alpha':np.logspace(-5,-1,10)}
-	pgrid={'penalty':['l1','l2'],'C':[1,10,100],'fit_intercept':[True,False]}
-
 
 
 	if scale:

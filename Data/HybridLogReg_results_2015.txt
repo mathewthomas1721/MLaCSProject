@@ -1,0 +1,4 @@
+Results for Adaboost Classifier in 2015
+	 numeric log loss: 0.496871473573
+	 categorical log loss: 0.671802274743
+	 full model loss: 0.87124652692

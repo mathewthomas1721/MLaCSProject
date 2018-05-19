@@ -1,0 +1,4 @@
+Results for HybridLogReg in 2012
+	 numeric log loss: 0.691396198436
+	 categorical log loss: 0.501379732541
+	 full model loss: 0.487460350249
